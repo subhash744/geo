@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter, Instrument_Serif } from "next/font/google"
 import "./globals.css"
+import { AuthProvider } from "@/contexts/AuthContext"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -143,7 +144,11 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
       </head>
-      <body className="font-sans antialiased">{children}</body>
+      <body className="font-sans antialiased">
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+      </body>
     </html>
   )
 }

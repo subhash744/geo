@@ -4,9 +4,11 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { getCurrentUser, saveUserProfile } from "@/lib/storage"
 import { ProfileCompletionCelebration } from "@/components/profile-completion-celebration"
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function SmartOnboarding() {
   const router = useRouter()
+  const { user: supabaseUser } = useAuth()
   const [step, setStep] = useState(1)
   const [user, setUser] = useState<any>(null)
   const [displayName, setDisplayName] = useState("")
@@ -23,16 +25,35 @@ export default function SmartOnboarding() {
   const [showCelebration, setShowCelebration] = useState(false)
 
   useEffect(() => {
+    // Redirect if not authenticated
+    if (!supabaseUser) {
+      router.push("/")
+      return
+    }
+    
     const currentUser = getCurrentUser()
     if (!currentUser) {
       router.push("/")
       return
     }
+    
+    // Check if this is a new user (no profile data yet)
+    const isNewUser = !currentUser.displayName || currentUser.displayName === `User ${supabaseUser.id.substring(0, 8)}`
+    
     setUser(currentUser)
-    setDisplayName(currentUser.displayName || "")
-    setUsername(currentUser.username || "")
-    setAvatar(currentUser.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.username}`)
-  }, [router])
+    
+    // Only set default values for new users
+    if (isNewUser) {
+      setDisplayName(supabaseUser.email?.split('@')[0] || "")
+      setUsername(supabaseUser.email?.split('@')[0] || `user_${supabaseUser.id.substring(0, 8)}`)
+      setAvatar(`https://api.dicebear.com/7.x/avataaars/svg?seed=${supabaseUser.id}`)
+    } else {
+      // Existing user with profile data
+      setDisplayName(currentUser.displayName || "")
+      setUsername(currentUser.username || "")
+      setAvatar(currentUser.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.username}`)
+    }
+  }, [router, supabaseUser])
 
   const checkUsernameAvailability = (username: string) => {
     // In a real app, this would check against the database
