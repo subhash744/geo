@@ -12,7 +12,7 @@ export default function Navigation() {
   const [mounted, setMounted] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
-  const { user, signOut } = useAuth()
+  const { user, signOut, loading } = useAuth()
 
   useEffect(() => {
     setMounted(true)
@@ -75,7 +75,11 @@ export default function Navigation() {
             <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 text-[#605A57]" />
           </form>
 
-          {user ? (
+          {loading ? (
+            <div className="w-8 h-8 rounded-full bg-[#E0DEDB] flex items-center justify-center">
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#37322F]"></div>
+            </div>
+          ) : user ? (
             <>
               <span className="text-sm text-[#605A57] hidden md:inline">{user.email}</span>
               <button

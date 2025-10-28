@@ -6,9 +6,11 @@ import { useAuth } from '@/contexts/AuthContext'
 
 export default function AuthCallback() {
   const router = useRouter()
-  const { user } = useAuth()
+  const { user, loading } = useAuth()
 
   useEffect(() => {
+    if (loading) return
+    
     if (user) {
       // User is authenticated, redirect to profile creation
       router.push('/profile-creation')
@@ -16,7 +18,7 @@ export default function AuthCallback() {
       // If for some reason user is not authenticated, redirect to home
       router.push('/')
     }
-  }, [user, router])
+  }, [user, loading, router])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#F7F5F3]">

@@ -23,9 +23,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
 
   useEffect(() => {
+    // Check if supabase is configured
+    if (!supabase) {
+      console.warn('Supabase not configured, skipping auth setup')
+      setLoading(false)
+      return
+    }
+
     // Check active session
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
+      const { data: { session } } = await supabase!.auth.getSession()
       if (session?.user) {
         setUser(session.user)
         // Map Supabase user to profile and set as current user
@@ -45,7 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false)
       
       // Listen for auth changes
-      const { data: { subscription } } = await supabase.auth.onAuthStateChange(
+      const { data: { subscription } } = await supabase!.auth.onAuthStateChange(
         (event, session) => {
           if (session?.user) {
             setUser(session.user)
@@ -78,11 +85,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     // Also check URL parameters for confirmation token
     const checkUrlParams = async () => {
+      // Only run this in browser environment
+      if (typeof window === 'undefined') return
+      
       const urlParams = new URLSearchParams(window.location.search)
       const token = urlParams.get('token')
       const type = urlParams.get('type')
       
-      if (token && type === 'signup') {
+      if (token && type === 'signup' && supabase) {
         // Verify the token
         const { data, error } = await supabase.auth.verifyOtp({
           type: 'signup',
@@ -103,6 +113,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [router])
 
   const signUp = async (email: string, password: string) => {
+    // Check if supabase is configured
+    if (!supabase) {
+      return { error: { message: 'Authentication is not configured properly' } }
+    }
+    
     // Check email domain restriction
     if (!email.endsWith('@gmail.com') && !email.endsWith('@icloud.com')) {
       return { error: { message: 'Only @gmail.com and @icloud.com email addresses are allowed.' } }
@@ -120,6 +135,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signIn = async (email: string, password: string) => {
+    // Check if supabase is configured
+    if (!supabase) {
+      return { error: { message: 'Authentication is not configured properly' } }
+    }
+    
     const result = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -135,6 +155,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signOut = async () => {
+    // Check if supabase is configured
+    if (!supabase) {
+      setUser(null)
+      return
+    }
+    
     await supabase.auth.signOut()
     setUser(null)
   }
