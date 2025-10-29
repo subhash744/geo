@@ -13,8 +13,11 @@ export default function HallOfFamePage() {
 
   useEffect(() => {
     setMounted(true)
-    const allUsers = getAllUsers()
-    setUsers(allUsers)
+    const fetchUsers = async () => {
+      const allUsers = await getAllUsers()
+      setUsers(allUsers)
+    }
+    fetchUsers()
   }, [])
 
   if (!mounted) return null

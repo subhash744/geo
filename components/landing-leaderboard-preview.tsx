@@ -16,17 +16,20 @@ export function LandingLeaderboardPreview() {
   const [animatingUpvotes, setAnimatingUpvotes] = useState<Set<string>>(new Set())
 
   useEffect(() => {
-    const leaderboard = getLeaderboard("all-time")
-    setTopUsers(leaderboard.slice(0, 5))
+    const fetchLeaderboard = async () => {
+      const leaderboard = await getLeaderboard("all-time")
+      setTopUsers(leaderboard.slice(0, 5))
+    }
+    fetchLeaderboard()
   }, [])
 
-  const handleUpvote = (userId: string, e: React.MouseEvent) => {
+  const handleUpvote = async (userId: string, e: React.MouseEvent) => {
     e.stopPropagation()
 
     const visitorId = "visitor_" + Math.random().toString(36).substr(2, 9)
 
-    if (canUpvote(userId, visitorId)) {
-      addUpvote(userId, visitorId)
+    if (await canUpvote(userId, visitorId)) {
+      await addUpvote(userId, visitorId)
       setUpvotedUsers(new Set([...upvotedUsers, userId]))
 
       confetti({
@@ -44,7 +47,7 @@ export function LandingLeaderboardPreview() {
         })
       }, 600)
 
-      const leaderboard = getLeaderboard("all-time")
+      const leaderboard = await getLeaderboard("all-time")
       setTopUsers(leaderboard.slice(0, 5))
     }
   }

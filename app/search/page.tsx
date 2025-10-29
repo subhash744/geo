@@ -22,9 +22,12 @@ function SearchResultsContent() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    const allUsers = getAllUsers()
-    setUsers(allUsers)
-    setIsLoading(false)
+    const fetchUsers = async () => {
+      const allUsers = await getAllUsers()
+      setUsers(allUsers)
+      setIsLoading(false)
+    }
+    fetchUsers()
   }, [])
 
   useEffect(() => {
@@ -37,18 +40,18 @@ function SearchResultsContent() {
     const lowerQuery = query.toLowerCase()
 
     // Search profiles
-    users.forEach((user) => {
+    users.forEach((user: UserProfile) => {
       if (
         user.displayName.toLowerCase().includes(lowerQuery) ||
         user.username.toLowerCase().includes(lowerQuery) ||
         user.bio.toLowerCase().includes(lowerQuery) ||
-        user.interests.some((interest) => interest.toLowerCase().includes(lowerQuery))
+        user.interests.some((interest: string) => interest.toLowerCase().includes(lowerQuery))
       ) {
         results.push({ type: "profile", data: user })
       }
 
       // Search projects
-      user.projects.forEach((project) => {
+      user.projects.forEach((project: Project) => {
         if (
           project.title.toLowerCase().includes(lowerQuery) ||
           project.description.toLowerCase().includes(lowerQuery)
@@ -58,7 +61,7 @@ function SearchResultsContent() {
       })
 
       // Search links
-      user.links.forEach((link) => {
+      user.links.forEach((link: { title: string; url: string }) => {
         if (
           link.title.toLowerCase().includes(lowerQuery) ||
           link.url.toLowerCase().includes(lowerQuery)
@@ -73,9 +76,9 @@ function SearchResultsContent() {
 
   // Group results by type
   const groupedResults = useMemo(() => {
-    const profiles = searchResults.filter((r) => r.type === "profile")
-    const projects = searchResults.filter((r) => r.type === "project")
-    const links = searchResults.filter((r) => r.type === "link")
+    const profiles = searchResults.filter((r: SearchResult) => r.type === "profile")
+    const projects = searchResults.filter((r: SearchResult) => r.type === "project")
+    const links = searchResults.filter((r: SearchResult) => r.type === "link")
 
     return { profiles, projects, links }
   }, [searchResults])

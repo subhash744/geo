@@ -15,23 +15,27 @@ export default function ExplorePage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
 
   useEffect(() => {
-    const allUsers = getAllUsers()
-    setUsers(allUsers)
-    setIsLoading(false)
+    const fetchUsers = async () => {
+      const allUsers = await getAllUsers()
+      setUsers(allUsers)
+      setIsLoading(false)
+    }
+    
+    fetchUsers()
   }, [])
 
   // Get featured profiles (hall of famers)
   const featuredProfiles = useMemo(() => {
-    return users.filter(user => user.hallOfFamer).slice(0, 5)
+    return users.filter((user: UserProfile) => user.hallOfFamer).slice(0, 5)
   }, [users])
 
   // Get trending projects (most upvoted projects)
   const trendingProjects = useMemo(() => {
-    const allProjects = users.flatMap(user => 
+    const allProjects = users.flatMap((user: UserProfile) => 
       user.projects.map(project => ({ ...project, user }))
     )
     return allProjects
-      .sort((a, b) => b.upvotes - a.upvotes)
+      .sort((a: any, b: any) => b.upvotes - a.upvotes)
       .slice(0, 5)
   }, [users])
 
@@ -39,7 +43,7 @@ export default function ExplorePage() {
   const topBadges = useMemo(() => {
     const badgeCounts = new Map<string, { count: number; badge: any }>()
     
-    users.forEach(user => {
+    users.forEach((user: UserProfile) => {
       const userBadges = getUserBadges(user)
       userBadges.forEach(badge => {
         if (badge.unlocked) {
@@ -53,13 +57,13 @@ export default function ExplorePage() {
     })
     
     return Array.from(badgeCounts.values())
-      .sort((a, b) => b.count - a.count)
+      .sort((a: any, b: any) => b.count - a.count)
       .slice(0, 8)
   }, [users])
 
   // Get all unique interests/categories
   const categories = useMemo(() => {
-    const allInterests = users.flatMap(user => user.interests)
+    const allInterests = users.flatMap((user: UserProfile) => user.interests)
     const uniqueInterests = Array.from(new Set(allInterests))
     return ["all", ...uniqueInterests]
   }, [users])
@@ -67,7 +71,7 @@ export default function ExplorePage() {
   // Filter users by category
   const filteredUsers = useMemo(() => {
     if (selectedCategory === "all") return users
-    return users.filter(user => user.interests.includes(selectedCategory))
+    return users.filter((user: UserProfile) => user.interests.includes(selectedCategory))
   }, [users, selectedCategory])
 
   // Get similar profiles based on interests
@@ -76,7 +80,7 @@ export default function ExplorePage() {
     
     // Find users with similar interests
     const similar = users
-      .filter(user => 
+      .filter((user: UserProfile) => 
         user.interests.includes(selectedCategory) && 
         user.interests.length > 1
       )

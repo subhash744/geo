@@ -51,24 +51,24 @@ export default function DevToolsPage() {
     }
   }
 
-  const handleSimulateTraffic = () => {
-    const users = getAllUsers()
+  const handleSimulateTraffic = async () => {
+    const users = await getAllUsers()
     if (users.length === 0) {
       addLog("No users to simulate traffic for")
       return
     }
 
-    const currentUser = getCurrentUser()
+    const currentUser = await getCurrentUser()
     const visitorId = currentUser?.id || "simulator"
     let eventCount = 0
 
     for (let i = 0; i < 100; i++) {
       const randomUser = users[Math.floor(Math.random() * users.length)]
       if (Math.random() > 0.5) {
-        incrementViewCount(randomUser.id)
+        await incrementViewCount(randomUser.id)
         eventCount++
       } else {
-        addUpvote(randomUser.id, visitorId)
+        await addUpvote(randomUser.id, visitorId)
         eventCount++
       }
     }
