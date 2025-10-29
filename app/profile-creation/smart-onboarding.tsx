@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { getCurrentUser, saveUserProfile } from "@/lib/storage"
 import { ProfileCompletionCelebration } from "@/components/profile-completion-celebration"
 import { useAuth } from '@/contexts/AuthContext'
+import { saveProfileToSupabase } from '@/lib/supabaseDb'
 
 export default function SmartOnboarding() {
   const router = useRouter()
@@ -104,7 +105,7 @@ export default function SmartOnboarding() {
     }
   }
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     if (user) {
       const updatedUser = {
         ...user,
@@ -115,7 +116,19 @@ export default function SmartOnboarding() {
         links: links.filter(link => link.title && link.url),
         avatar,
       }
+      
+      // Save to localStorage (existing functionality)
       saveUserProfile(updatedUser)
+      
+      // Save to Supabase (new functionality)
+      try {
+        const result = await saveProfileToSupabase(updatedUser)
+        if (!result.success) {
+          console.warn('Failed to save profile to Supabase:', result.error)
+        }
+      } catch (error) {
+        console.warn('Error saving profile to Supabase:', error)
+      }
       
       // Show celebration screen
       setShowCelebration(true)

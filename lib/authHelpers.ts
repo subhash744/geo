@@ -1,25 +1,28 @@
 import { User } from '@supabase/supabase-js'
-import { UserProfile, saveUserProfile, getAllUsers } from '@/lib/storage'
+import { 
+  saveUserProfile, 
+  getAllUsers 
+} from '@/lib/storage'
+import { getProfileFromSupabase } from '@/lib/supabaseDb'
 
 /**
  * Maps a Supabase user to a UserProfile
  * @param supabaseUser The Supabase user object
  * @returns A UserProfile object
  */
-export function mapSupabaseUserToProfile(supabaseUser: User): UserProfile {
-  // Check if user already exists in localStorage
-  const existingUsers = getAllUsers()
-  const existingUser = existingUsers.find(u => u.id === supabaseUser.id)
+export async function mapSupabaseUserToProfile(supabaseUser: User) {
+  // Try to fetch existing user from Supabase
+  const userResult = await getProfileFromSupabase(supabaseUser.id)
   
-  if (existingUser) {
-    return existingUser
+  if (userResult.success) {
+    return userResult.data
   }
   
   // Extract email username part or use a default
   const emailUsername = supabaseUser.email?.split('@')[0] || `user_${supabaseUser.id.substring(0, 8)}`
   
   // Create a new profile for the user
-  const newProfile: UserProfile = {
+  const newProfile: any = {
     id: supabaseUser.id,
     username: emailUsername,
     displayName: emailUsername,
@@ -53,7 +56,7 @@ export function mapSupabaseUserToProfile(supabaseUser: User): UserProfile {
     referralCode: Math.random().toString(36).substring(2, 8).toUpperCase(),
     referralCount: 0,
     hideLocation: false,
-    themePreference: "light",
+    themePreference: "light" as const,
     dailyStats: [],
     achievements: [],
     streakFreezes: 0,
@@ -70,7 +73,7 @@ export function mapSupabaseUserToProfile(supabaseUser: User): UserProfile {
   }
   
   // Save the new profile
-  saveUserProfile(newProfile, true)
+  await saveUserProfile(newProfile, true)
   
   return newProfile
 }

@@ -48,7 +48,7 @@ const badgeColors: Record<string, string> = {
   Prolific: "bg-violet-500 text-white",
 }
 
-export function ImprovedLeaderboard() {
+export default function ImprovedLeaderboard() {
   const router = useRouter()
   const [currentUser, setCurrentUser] = useState<any>(null)
   const [sortBy, setSortBy] = useState<SortBy>("today")
@@ -130,10 +130,10 @@ export function ImprovedLeaderboard() {
   }, [leaderboard, searchTerm, sortOption])
 
   // Handle upvote
-  const handleUpvote = (userId: string) => {
+  const handleUpvote = async (userId: string) => {
     const visitorId = "visitor_" + Math.random().toString(36).substr(2, 9)
     
-    if (canUpvote(userId, visitorId)) {
+    if (await canUpvote(userId, visitorId)) {
       addUpvote(userId, visitorId)
       
       // Update UI

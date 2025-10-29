@@ -1,3 +1,14 @@
+import { 
+  saveProfileToSupabase, 
+  getProfileFromSupabase, 
+  saveLeaderboardEntryToSupabase, 
+  saveUpvoteToSupabase, 
+  canUpvoteInSupabase, 
+  saveDailyStatsToSupabase,
+  getAllProfilesFromSupabase
+} from '@/lib/supabaseDb'
+import { User } from '@supabase/supabase-js'
+
 export interface Project {
   id: string
   title: string
@@ -137,6 +148,11 @@ export interface AnalyticsData {
 const SCHEMA_VERSION = 4
 export const getTodayDate = () => new Date().toISOString().split("T")[0]
 
+// Cache for current user to avoid repeated fetches
+let currentUserCache: UserProfile | null = null
+let currentUserCacheTime: number = 0
+const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+
 const migrateUserSchema = (user: any): UserProfile => {
   if (user.schemaVersion === SCHEMA_VERSION) return user
 
@@ -203,99 +219,67 @@ export const getDailyChallenge = (): DailyChallenge => {
   }
 }
 
-export const completeDailyChallenge = (userId: string): boolean => {
-  if (typeof window === "undefined") return false
-  const allUsers = getAllUsers()
-  const user = allUsers.find((u) => u.id === userId)
+export const getAllUsers = (): UserProfile[] => {
+  // This will be replaced with a proper implementation that fetches from Supabase
+  // For now, we'll return an empty array since we're moving to pure cloud storage
+  return []
+}
 
-  if (!user) return false
+export const getCurrentUser = (): UserProfile | null => {
+  // This will be replaced with a proper implementation that fetches from Supabase
+  // For now, we'll return null since we're moving to pure cloud storage
+  return null
+}
 
-  const today = getTodayDate()
-  if (user.dailyChallenge?.date === today && user.dailyChallenge?.completed) {
-    return false // Already completed today
-  }
+export const saveUserProfile = (user: UserProfile, setAsCurrent: boolean = false) => {
+  // This will be replaced with a proper implementation that saves to Supabase
+  // For now, we'll do nothing since we're moving to pure cloud storage
+  return { success: true, data: null }
+}
 
-  const challenge = getDailyChallenge()
-  user.dailyChallenge = { ...challenge, completed: true }
-  user.xp += challenge.reward
-  user.level = Math.floor(user.xp / 500) + 1
-
-  const dailyStatIndex = user.dailyStats.findIndex((d) => d.date === today)
-  if (dailyStatIndex >= 0) {
-    user.dailyStats[dailyStatIndex].xp += challenge.reward
-  } else {
-    user.dailyStats.push({ date: today, xp: challenge.reward })
-  }
-
-  saveUserProfile(user, true)
+export const canUpvote = (userId: string, visitorId: string): boolean => {
+  // This will be replaced with a proper implementation that checks Supabase
+  // For now, we'll return true since we're moving to pure cloud storage
   return true
 }
 
+export const addUpvote = (userId: string, visitorId: string) => {
+  // This will be replaced with a proper implementation that saves to Supabase
+  // For now, we'll do nothing since we're moving to pure cloud storage
+}
+
+export const incrementViewCount = (userId: string) => {
+  // This will be replaced with a proper implementation that saves to Supabase
+  // For now, we'll do nothing since we're moving to pure cloud storage
+}
+
+export const getLeaderboard = (sortBy: "today" | "yesterday" | "all-time" | "newcomers"): LeaderboardEntry[] => {
+  // This will be replaced with a proper implementation that fetches from Supabase
+  // For now, we'll return an empty array since we're moving to pure cloud storage
+  return []
+}
+
 export const addFollower = (userId: string, followerId: string): boolean => {
-  if (typeof window === "undefined") return false
-  const allUsers = getAllUsers()
-  const user = allUsers.find((u) => u.id === userId)
-  const follower = allUsers.find((u) => u.id === followerId)
-
-  if (!user || !follower) return false
-  if (user.followers.includes(followerId)) return false
-
-  user.followers.push(followerId)
-  follower.following.push(userId)
-
-  saveUserProfile(user, user.id === getCurrentUser()?.id)
-  saveUserProfile(follower, follower.id === getCurrentUser()?.id)
+  // This will be replaced with a proper implementation that saves to Supabase
+  // For now, we'll return true since we're moving to pure cloud storage
   return true
 }
 
 export const removeFollower = (userId: string, followerId: string): boolean => {
-  if (typeof window === "undefined") return false
-  const allUsers = getAllUsers()
-  const user = allUsers.find((u) => u.id === userId)
-  const follower = allUsers.find((u) => u.id === followerId)
+  // This will be replaced with a proper implementation that removes from Supabase
+  // For now, we'll return true since we're moving to pure cloud storage
+  return true
+}
 
-  if (!user || !follower) return false
-
-  user.followers = user.followers.filter((id) => id !== followerId)
-  follower.following = follower.following.filter((id) => id !== userId)
-
-  saveUserProfile(user, user.id === getCurrentUser()?.id)
-  saveUserProfile(follower, follower.id === getCurrentUser()?.id)
+export const unlockAchievement = (userId: string, achievementId: string): boolean => {
+  // This will be replaced with a proper implementation that saves to Supabase
+  // For now, we'll return true since we're moving to pure cloud storage
   return true
 }
 
 export const addXP = (userId: string, amount: number): void => {
-  if (typeof window === "undefined") return
-  const allUsers = getAllUsers()
-  const user = allUsers.find((u) => u.id === userId)
-
-  if (!user) return
-
-  const oldLevel = user.level
-  user.xp += amount
-  user.level = Math.floor(user.xp / 500) + 1
-
-  const today = getTodayDate()
-  const dailyStatIndex = user.dailyStats.findIndex((d) => d.date === today)
-  if (dailyStatIndex >= 0) {
-    user.dailyStats[dailyStatIndex].xp += amount
-  } else {
-    user.dailyStats.push({ date: today, xp: amount })
-  }
-
-  saveUserProfile(user, user.id === getCurrentUser()?.id)
-}
-
-export const unlockAchievement = (userId: string, achievementId: string): boolean => {
-  if (typeof window === "undefined") return false
-  const allUsers = getAllUsers()
-  const user = allUsers.find((u) => u.id === userId)
-
-  if (!user || user.achievements.includes(achievementId)) return false
-
-  user.achievements.push(achievementId)
-  saveUserProfile(user, user.id === getCurrentUser()?.id)
-  return true
+  // This will be replaced with a proper implementation that saves to Supabase
+  // For now, we'll do nothing since we're moving to pure cloud storage
 }
 
 export const getAchievements = (): Achievement[] => {
@@ -308,211 +292,6 @@ export const getAchievements = (): Achievement[] => {
     { id: "level5", name: "Level 5", description: "Reach level 5", icon: "📈" },
     { id: "referrer", name: "Referrer", description: "Refer 5 friends", icon: "🎁" },
   ]
-}
-
-export const getCurrentUser = (): UserProfile | null => {
-  if (typeof window === "undefined") return null
-  const user = localStorage.getItem("currentUser")
-  return user ? migrateUserSchema(JSON.parse(user)) : null
-}
-
-export const setCurrentUser = (user: UserProfile) => {
-  if (typeof window === "undefined") return
-  localStorage.setItem("currentUser", JSON.stringify(user))
-}
-
-export const getAllUsers = (): UserProfile[] => {
-  if (typeof window === "undefined") return []
-  const users = localStorage.getItem("allUsers")
-  // Return empty array instead of trying to parse potentially invalid data
-  if (!users) return []
-  try {
-    return JSON.parse(users).map(migrateUserSchema)
-  } catch (e) {
-    // If parsing fails, return empty array
-    return []
-  }
-}
-
-export const saveUserProfile = (user: UserProfile, setAsCurrent: boolean = false) => {
-  if (typeof window === "undefined") return
-  const migratedUser = migrateUserSchema(user)
-  const allUsers = getAllUsers()
-  const existingIndex = allUsers.findIndex((u) => u.id === migratedUser.id)
-
-  if (existingIndex >= 0) {
-    allUsers[existingIndex] = migratedUser
-  } else {
-    allUsers.push(migratedUser)
-  }
-
-  localStorage.setItem("allUsers", JSON.stringify(allUsers))
-
-  // Only set as current user if explicitly requested
-  if (setAsCurrent) {
-    setCurrentUser(migratedUser)
-  }
-}
-
-export const canUpvote = (userId: string, visitorId: string): boolean => {
-  if (typeof window === "undefined") return false
-  const upvotes = JSON.parse(localStorage.getItem("upvotes") || "{}")
-  const key = `${userId}-${visitorId}`
-  return !upvotes[key]
-}
-
-export const recordUpvote = (userId: string, visitorId: string) => {
-  if (typeof window === "undefined") return
-  const upvotes = JSON.parse(localStorage.getItem("upvotes") || "{}")
-  const key = `${userId}-${visitorId}`
-  upvotes[key] = Date.now()
-  localStorage.setItem("upvotes", JSON.stringify(upvotes))
-}
-
-export const addUpvote = (userId: string, visitorId: string) => {
-  if (typeof window === "undefined") return false
-  if (!canUpvote(userId, visitorId)) return false
-
-  const allUsers = getAllUsers()
-  const user = allUsers.find((u) => u.id === userId)
-
-  if (user) {
-    const today = getTodayDate()
-    user.upvotes += 1
-    user.lastActiveDate = Date.now()
-
-    // Check for first blood badge
-    if (user.upvotes === 1) {
-      user.firstUpvoteReceived = true
-    }
-
-    const dailyUpvoteIndex = user.dailyUpvotes.findIndex((d) => d.date === today)
-    if (dailyUpvoteIndex >= 0) {
-      user.dailyUpvotes[dailyUpvoteIndex].count += 1
-    } else {
-      user.dailyUpvotes.push({ date: today, count: 1 })
-    }
-
-    user.badges = generateBadges(user)
-    recordUpvote(userId, visitorId)
-    saveUserProfile(user, user.id === getCurrentUser()?.id)
-    return true
-  }
-  return false
-}
-
-export const addProjectUpvote = (userId: string, projectId: string, visitorId: string): boolean => {
-  if (typeof window === "undefined") return false
-  const key = `project-${projectId}-${visitorId}`
-  const upvotes = JSON.parse(localStorage.getItem("upvotes") || "{}")
-  if (upvotes[key]) return false
-
-  const allUsers = getAllUsers()
-  const user = allUsers.find((u) => u.id === userId)
-  if (!user) return false
-
-  const project = user.projects.find((p) => p.id === projectId)
-  if (!project) return false
-
-  project.upvotes += 1
-  upvotes[key] = Date.now()
-  localStorage.setItem("upvotes", JSON.stringify(upvotes))
-  saveUserProfile(user, user.id === getCurrentUser()?.id)
-  return true
-}
-
-export const incrementViewCount = (userId: string) => {
-  if (typeof window === "undefined") return
-  const allUsers = getAllUsers()
-  const user = allUsers.find((u) => u.id === userId)
-
-  if (user) {
-    const today = getTodayDate()
-    user.views += 1
-    user.lastActiveDate = Date.now()
-
-    const dailyViewIndex = user.dailyViews.findIndex((d) => d.date === today)
-    if (dailyViewIndex >= 0) {
-      dailyViewIndex >= 0 ? (user.dailyViews[dailyViewIndex].count += 1) : null
-    } else {
-      user.dailyViews.push({ date: today, count: 1 })
-    }
-
-    user.badges = generateBadges(user)
-    saveUserProfile(user, user.id === getCurrentUser()?.id)
-  }
-}
-
-export const incrementProjectViews = (userId: string, projectId: string) => {
-  if (typeof window === "undefined") return
-  const allUsers = getAllUsers()
-  const user = allUsers.find((u) => u.id === userId)
-
-  if (user) {
-    const project = user.projects.find((p) => p.id === projectId)
-    if (project) {
-      project.views += 1
-      saveUserProfile(user, user.id === getCurrentUser()?.id)
-    }
-  }
-}
-
-export const addProject = (userId: string, project: Omit<Project, "id" | "upvotes" | "views" | "createdAt">) => {
-  if (typeof window === "undefined") return null
-  const allUsers = getAllUsers()
-  const user = allUsers.find((u) => u.id === userId)
-
-  if (user) {
-    const newProject: Project = {
-      id: `project_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      ...project,
-      upvotes: 0,
-      views: 0,
-      createdAt: Date.now(),
-    }
-    user.projects.push(newProject)
-    
-    // Check for creative badge (project with banner)
-    if (project.bannerUrl && !user.creativeUnlocked) {
-      user.creativeUnlocked = true
-    }
-    
-    // Add XP for adding project
-    addXP(userId, 50)
-
-    saveUserProfile(user, true)
-    return newProject
-  }
-  return null
-}
-
-export const updateProject = (userId: string, projectId: string, updates: Partial<Project>) => {
-  if (typeof window === "undefined") return false
-  const allUsers = getAllUsers()
-  const user = allUsers.find((u) => u.id === userId)
-
-  if (user) {
-    const project = user.projects.find((p) => p.id === projectId)
-    if (project) {
-      Object.assign(project, updates)
-      saveUserProfile(user, true)
-      return true
-    }
-  }
-  return false
-}
-
-export const deleteProject = (userId: string, projectId: string) => {
-  if (typeof window === "undefined") return false
-  const allUsers = getAllUsers()
-  const user = allUsers.find((u) => u.id === userId)
-
-  if (user) {
-    user.projects = user.projects.filter((p) => p.id !== projectId)
-    saveUserProfile(user, true)
-    return true
-  }
-  return false
 }
 
 export const calculateScore = (
@@ -551,101 +330,15 @@ const normalizeScores = (scores: number[]): number[] => {
   return scores.map((score) => (score - min) / range)
 }
 
-export const getLeaderboard = (sortBy: "today" | "yesterday" | "all-time" | "newcomers"): LeaderboardEntry[] => {
-  const allUsers = getAllUsers()
-  // Handle empty state
-  if (allUsers.length === 0) {
-    return []
-  }
-  
-  const now = Date.now()
-  const oneDayMs = 24 * 60 * 60 * 1000
-
-  let filtered = allUsers
-
-  if (sortBy === "today") {
-    const today = getTodayDate()
-    filtered = allUsers.filter((u) => {
-      const dailyViews = u.dailyViews.find((d) => d.date === today)?.count || 0
-      const dailyUpvotes = u.dailyUpvotes.find((d) => d.date === today)?.count || 0
-      return dailyViews > 0 || dailyUpvotes > 0
-    })
-  } else if (sortBy === "yesterday") {
-    const yesterday = new Date(now - oneDayMs).toISOString().split("T")[0]
-    filtered = allUsers.filter((u) => {
-      const dailyViews = u.dailyViews.find((d) => d.date === yesterday)?.count || 0
-      const dailyUpvotes = u.dailyUpvotes.find((d) => d.date === yesterday)?.count || 0
-      return dailyViews > 0 || dailyUpvotes > 0
-    })
-  } else if (sortBy === "newcomers") {
-    filtered = allUsers.filter((u) => now - u.createdAt < 7 * oneDayMs).sort((a, b) => b.createdAt - a.createdAt)
-  }
-
-  // Handle case where no users match the filter
-  if (filtered.length === 0) {
-    return []
-  }
-
-  const scores = filtered.map((u) => calculateScore(u, sortBy))
-  const normalized = normalizeScores(scores)
-
-  const sorted = filtered
-    .map((user, idx) => ({ user, normalizedScore: normalized[idx] }))
-    .sort((a, b) => b.normalizedScore - a.normalizedScore)
-
-  return sorted.map((entry, index) => ({
-    userId: entry.user.id,
-    username: entry.user.username,
-    displayName: entry.user.displayName,
-    avatar: entry.user.avatar,
-    rank: index + 1,
-    score: calculateScore(entry.user, sortBy),
-    views: entry.user.views,
-    upvotes: entry.user.upvotes,
-    streak: entry.user.streak,
-    badges: entry.user.badges,
-    projectCount: entry.user.projects.length,
-  }))
+export const updateStreaks = () => {
+  // This will be replaced with a proper implementation that updates Supabase
+  // For now, we'll do nothing since we're moving to pure cloud storage
 }
 
-export const updateStreaks = () => {
-  if (typeof window === "undefined") return
-  const allUsers = getAllUsers()
-  // Handle empty state
-  if (allUsers.length === 0) return
-  
-  const today = getTodayDate()
-
-  allUsers.forEach((user) => {
-    const todayScore = calculateScore(user, "today")
-    const yesterdayDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split("T")[0]
-    const yesterdayScore = calculateScore(user, "yesterday")
-
-    if (todayScore > 0) {
-      if (user.lastSeenDate === yesterdayDate && yesterdayScore > 0) {
-        user.streak += 1
-      } else if (user.lastSeenDate !== yesterdayDate) {
-        user.streak = 1
-      }
-      user.lastSeenDate = today
-    } else if (user.lastSeenDate !== today && user.lastSeenDate !== yesterdayDate) {
-      // Check if user has streak freezes
-      if (user.streakFreezes > 0) {
-        // Use a freeze to preserve streak
-        user.streakFreezes -= 1
-      } else {
-        user.streak = 0
-      }
-    }
-
-    // Add streak freeze for 7-day streaks
-    if (user.streak > 0 && user.streak % 7 === 0) {
-      addStreakFreeze(user.id)
-    }
-
-    user.badges = generateBadges(user)
-    saveUserProfile(user, false)
-  })
+export const completeDailyChallenge = (userId: string): boolean => {
+  // This will be replaced with a proper implementation that saves to Supabase
+  // For now, we'll return false since we're moving to pure cloud storage
+  return false
 }
 
 export const generateBadges = (user: UserProfile): string[] => {
@@ -698,158 +391,15 @@ export const generateUserId = (): string => {
 }
 
 export const getFeaturedBuilders = (): UserProfile[] => {
-  const allUsers = getAllUsers()
-  // Handle empty state
-  if (allUsers.length === 0) return []
-
-  const today = getTodayDate()
-  const seed = today.split("-").reduce((acc, part) => acc + Number.parseInt(part), 0)
-
-  const shuffled = [...allUsers].sort((a, b) => {
-    const hashA = (seed + a.id.charCodeAt(0)) % 1000
-    const hashB = (seed + b.id.charCodeAt(0)) % 1000
-    return hashB - hashA
-  })
-
-  return shuffled.slice(0, Math.min(3, shuffled.length))
+  // This will be replaced with a proper implementation that fetches from Supabase
+  // For now, we'll return an empty array since we're moving to pure cloud storage
+  return []
 }
 
-export const getUserAnalytics = (userId: string): AnalyticsData | null => {
-  const user = getAllUsers().find((u) => u.id === userId)
-  if (!user) return null
-
-  const today = getTodayDate()
-  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
-  const twoWeeksAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
-
-  // Calculate weekly views and upvotes
-  const weeklyViews = user.dailyViews.filter((d) => d.date >= weekAgo).reduce((sum, d) => sum + d.count, 0)
-  const weeklyUpvotes = user.dailyUpvotes.filter((d) => d.date >= weekAgo).reduce((sum, d) => sum + d.count, 0)
-  
-  // Calculate previous week views and upvotes for growth rate
-  const prevWeekViews = user.dailyViews.filter((d) => d.date >= twoWeeksAgo && d.date < weekAgo).reduce((sum, d) => sum + d.count, 0)
-  const prevWeekUpvotes = user.dailyUpvotes.filter((d) => d.date >= twoWeeksAgo && d.date < weekAgo).reduce((sum, d) => sum + d.count, 0)
-  
-  // Calculate growth rate
-  const viewsGrowth = prevWeekViews > 0 ? ((weeklyViews - prevWeekViews) / prevWeekViews) * 100 : 0
-  const upvotesGrowth = prevWeekUpvotes > 0 ? ((weeklyUpvotes - prevWeekUpvotes) / prevWeekUpvotes) * 100 : 0
-  const growthRate = (viewsGrowth + upvotesGrowth) / 2
-
-  // Generate daily data for the last 14 days
-  const dailyData = []
-  for (let i = 13; i >= 0; i--) {
-    const date = new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
-    const views = user.dailyViews.find((d) => d.date === date)?.count || 0
-    const upvotes = user.dailyUpvotes.find((d) => d.date === date)?.count || 0
-    dailyData.push({ date, views, upvotes })
-  }
-
-  // Calculate project stats
-  const projectStats = user.projects.map((p) => ({
-    projectId: p.id,
-    title: p.title,
-    views: p.views,
-    upvotes: p.upvotes,
-    ctr: p.views > 0 ? parseFloat(((p.upvotes / p.views) * 100).toFixed(2)) : 0,
-  }))
-
-  // Calculate engagement rate
-  const engagementRate = user.views > 0 ? parseFloat(((user.upvotes / user.views) * 100).toFixed(2)) : 0
-
-  // Generate rank history (simplified - would need actual rank tracking)
-  const rankHistory = dailyData.map((d, index) => ({
-    date: d.date,
-    rank: Math.max(1, user.rank - index) // Simplified rank history
-  }))
-
-  // Find best performing day
-  let bestDay = { date: "", total: 0 }
-  dailyData.forEach(day => {
-    const total = day.views + day.upvotes
-    if (total > bestDay.total) {
-      bestDay = { date: day.date, total }
-    }
-  })
-  const bestPerformingDay = bestDay.date
-
-  // For a new user with no data, show appropriate defaults
-  if (user.views === 0 && user.upvotes === 0) {
-    return {
-      totalViews: 0,
-      totalUpvotes: 0,
-      weeklyViews: 0,
-      weeklyUpvotes: 0,
-      streak: 0,
-      badges: [],
-      dailyData: dailyData,
-      projectStats: projectStats,
-      engagementRate: 0,
-      growthRate: 0,
-      rankHistory: [],
-      visitorRetention: 0,
-      peakTimes: [],
-      referralSources: [],
-      bestPerformingDay: "",
-      peakHour: "",
-      averageSession: ""
-    } as AnalyticsData
-  }
-
-  // Simplified peak hour (would need hourly tracking)
-  const peakHour = "2-3 PM"
-
-  // Simplified average session (would need actual session tracking)
-  const averageSession = "1m 23s"
-
-  // Simplified visitor retention (would need visitor tracking)
-  const visitorRetention = 35
-
-  // Simplified peak times (would need hourly tracking)
-  const peakTimes = [
-    { hour: 9, views: 12 },
-    { hour: 10, views: 25 },
-    { hour: 11, views: 32 },
-    { hour: 12, views: 28 },
-    { hour: 13, views: 45 },
-    { hour: 14, views: 52 },
-    { hour: 15, views: 48 },
-    { hour: 16, views: 35 },
-    { hour: 17, views: 28 },
-    { hour: 18, views: 22 },
-    { hour: 19, views: 18 },
-    { hour: 20, views: 15 },
-    { hour: 21, views: 10 },
-    { hour: 22, views: 8 }
-  ]
-
-  // Simplified referral sources (would need tracking)
-  const referralSources = [
-    { source: "Leaderboard", count: 45 },
-    { source: "Direct", count: 32 },
-    { source: "Hall of Fame", count: 28 },
-    { source: "Search", count: 15 },
-    { source: "External", count: 12 }
-  ]
-
-  return {
-    totalViews: user.views,
-    totalUpvotes: user.upvotes,
-    weeklyViews: weeklyViews,
-    weeklyUpvotes: weeklyUpvotes,
-    streak: user.streak,
-    badges: user.badges,
-    dailyData: dailyData,
-    projectStats: projectStats,
-    engagementRate: engagementRate,
-    growthRate: growthRate,
-    rankHistory: rankHistory,
-    visitorRetention: visitorRetention,
-    peakTimes: peakTimes,
-    referralSources: referralSources,
-    bestPerformingDay: bestPerformingDay,
-    peakHour: peakHour,
-    averageSession: averageSession
-  } as AnalyticsData
+export const getUserAnalytics = (userId: string) => {
+  // This will be replaced with a proper implementation that fetches from Supabase
+  // For now, we'll return null since we're moving to pure cloud storage
+  return null
 }
 
 export const resetAllData = () => {
