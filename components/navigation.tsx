@@ -101,7 +101,7 @@ export default function Navigation() {
           )}
         </div>
       </nav>
-      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+      {typeof AuthModal !== 'undefined' && <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />}
     </>
   )
 }

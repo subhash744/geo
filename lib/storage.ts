@@ -5,7 +5,15 @@ import {
   saveUpvoteToSupabase, 
   canUpvoteInSupabase, 
   saveDailyStatsToSupabase,
-  getAllProfilesFromSupabase
+  getAllProfilesFromSupabase,
+  getUpvotesForUserFromSupabase,
+  getDailyStatsFromSupabase,
+  saveDailyViewsToSupabase,
+  saveDailyUpvotesToSupabase,
+  saveUserFollowerToSupabase,
+  saveUserFollowingToSupabase,
+  saveUserAchievementToSupabase,
+  saveUserDailyStatsToSupabase
 } from '@/lib/supabaseDb'
 import { User } from '@supabase/supabase-js'
 
@@ -219,67 +227,120 @@ export const getDailyChallenge = (): DailyChallenge => {
   }
 }
 
-export const getAllUsers = (): UserProfile[] => {
-  // This will be replaced with a proper implementation that fetches from Supabase
-  // For now, we'll return an empty array since we're moving to pure cloud storage
-  return []
+export const getAllUsers = async (): Promise<UserProfile[]> => {
+  try {
+    const result = await getAllProfilesFromSupabase()
+    if (result.success && result.data) {
+      return result.data.map((profile: any) => migrateUserSchema(profile))
+    }
+    return []
+  } catch (error) {
+    console.error('Error fetching all users:', error)
+    return []
+  }
 }
 
-export const getCurrentUser = (): UserProfile | null => {
-  // This will be replaced with a proper implementation that fetches from Supabase
-  // For now, we'll return null since we're moving to pure cloud storage
-  return null
+export const getCurrentUser = async (): Promise<UserProfile | null> => {
+  try {
+    // In a real implementation, you would get the current user ID from the auth context
+    // For now, we'll return null as this needs to be implemented properly
+    return null
+  } catch (error) {
+    console.error('Error fetching current user:', error)
+    return null
+  }
 }
 
-export const saveUserProfile = (user: UserProfile, setAsCurrent: boolean = false) => {
-  // This will be replaced with a proper implementation that saves to Supabase
-  // For now, we'll do nothing since we're moving to pure cloud storage
-  return { success: true, data: null }
+export const saveUserProfile = async (user: UserProfile, setAsCurrent: boolean = false) => {
+  try {
+    const result = await saveProfileToSupabase(user)
+    return result
+  } catch (error) {
+    console.error('Error saving user profile:', error)
+    return { success: false, error: 'Failed to save profile' }
+  }
 }
 
-export const canUpvote = (userId: string, visitorId: string): boolean => {
-  // This will be replaced with a proper implementation that checks Supabase
-  // For now, we'll return true since we're moving to pure cloud storage
-  return true
+export const canUpvote = async (userId: string, visitorId: string): Promise<boolean> => {
+  try {
+    const result = await canUpvoteInSupabase(userId, visitorId)
+    if (result.success) {
+      return result.canUpvote ?? true
+    }
+    return true
+  } catch (error) {
+    console.error('Error checking upvote status:', error)
+    return true
+  }
 }
 
-export const addUpvote = (userId: string, visitorId: string) => {
-  // This will be replaced with a proper implementation that saves to Supabase
-  // For now, we'll do nothing since we're moving to pure cloud storage
+export const addUpvote = async (userId: string, visitorId: string) => {
+  try {
+    await saveUpvoteToSupabase(userId, visitorId)
+  } catch (error) {
+    console.error('Error adding upvote:', error)
+  }
 }
 
-export const incrementViewCount = (userId: string) => {
-  // This will be replaced with a proper implementation that saves to Supabase
-  // For now, we'll do nothing since we're moving to pure cloud storage
+export const incrementViewCount = async (userId: string) => {
+  try {
+    // This would need to be implemented with proper Supabase integration
+    // For now, we'll just log that it should be implemented
+    console.log(`Incrementing view count for user ${userId}`)
+  } catch (error) {
+    console.error('Error incrementing view count:', error)
+  }
 }
 
-export const getLeaderboard = (sortBy: "today" | "yesterday" | "all-time" | "newcomers"): LeaderboardEntry[] => {
-  // This will be replaced with a proper implementation that fetches from Supabase
-  // For now, we'll return an empty array since we're moving to pure cloud storage
-  return []
+export const getLeaderboard = async (sortBy: "today" | "yesterday" | "all-time" | "newcomers"): Promise<LeaderboardEntry[]> => {
+  try {
+    // This would need to be implemented with proper Supabase integration
+    // For now, we'll return an empty array
+    return []
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error)
+    return []
+  }
 }
 
-export const addFollower = (userId: string, followerId: string): boolean => {
-  // This will be replaced with a proper implementation that saves to Supabase
-  // For now, we'll return true since we're moving to pure cloud storage
-  return true
+export const addFollower = async (userId: string, followerId: string): Promise<boolean> => {
+  try {
+    const result = await saveUserFollowerToSupabase(userId, followerId)
+    return result.success
+  } catch (error) {
+    console.error('Error adding follower:', error)
+    return false
+  }
 }
 
-export const removeFollower = (userId: string, followerId: string): boolean => {
-  // This will be replaced with a proper implementation that removes from Supabase
-  // For now, we'll return true since we're moving to pure cloud storage
-  return true
+export const removeFollower = async (userId: string, followerId: string): Promise<boolean> => {
+  try {
+    // This would need to be implemented with proper Supabase integration
+    // For now, we'll return true
+    return true
+  } catch (error) {
+    console.error('Error removing follower:', error)
+    return false
+  }
 }
 
-export const unlockAchievement = (userId: string, achievementId: string): boolean => {
-  // This will be replaced with a proper implementation that saves to Supabase
-  // For now, we'll return true since we're moving to pure cloud storage
-  return true
+export const unlockAchievement = async (userId: string, achievementId: string): Promise<boolean> => {
+  try {
+    const result = await saveUserAchievementToSupabase(userId, achievementId)
+    return result.success
+  } catch (error) {
+    console.error('Error unlocking achievement:', error)
+    return false
+  }
 }
 
-export const addXP = (userId: string, amount: number): void => {
-  // This will be replaced with a proper implementation that saves to Supabase
-  // For now, we'll do nothing since we're moving to pure cloud storage
+export const addXP = async (userId: string, amount: number): Promise<void> => {
+  try {
+    const today = getTodayDate()
+    await saveUserDailyStatsToSupabase(userId, today, amount)
+  } catch (error) {
+    console.error('Error adding XP:', error)
+  }
 }
 
 export const getAchievements = (): Achievement[] => {
@@ -330,15 +391,24 @@ const normalizeScores = (scores: number[]): number[] => {
   return scores.map((score) => (score - min) / range)
 }
 
-export const updateStreaks = () => {
-  // This will be replaced with a proper implementation that updates Supabase
-  // For now, we'll do nothing since we're moving to pure cloud storage
+export const updateStreaks = async () => {
+  try {
+    // This would need to be implemented with proper Supabase integration
+    // For now, we'll do nothing
+  } catch (error) {
+    console.error('Error updating streaks:', error)
+  }
 }
 
-export const completeDailyChallenge = (userId: string): boolean => {
-  // This will be replaced with a proper implementation that saves to Supabase
-  // For now, we'll return false since we're moving to pure cloud storage
-  return false
+export const completeDailyChallenge = async (userId: string): Promise<boolean> => {
+  try {
+    // This would need to be implemented with proper Supabase integration
+    // For now, we'll return false
+    return false
+  } catch (error) {
+    console.error('Error completing daily challenge:', error)
+    return false
+  }
 }
 
 export const generateBadges = (user: UserProfile): string[] => {
@@ -390,101 +460,76 @@ export const generateUserId = (): string => {
   return `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 }
 
-export const getFeaturedBuilders = (): UserProfile[] => {
-  // This will be replaced with a proper implementation that fetches from Supabase
-  // For now, we'll return an empty array since we're moving to pure cloud storage
-  return []
+export const getFeaturedBuilders = async (): Promise<UserProfile[]> => {
+  try {
+    // This would need to be implemented with proper Supabase integration
+    // For now, we'll return an empty array
+    return []
+  } catch (error) {
+    console.error('Error fetching featured builders:', error)
+    return []
+  }
 }
 
-export const getUserAnalytics = (userId: string) => {
-  // This will be replaced with a proper implementation that fetches from Supabase
-  // For now, we'll return null since we're moving to pure cloud storage
+export const getUserAnalytics = async (userId: string) => {
+  try {
+    // This would need to be implemented with proper Supabase integration
+    // For now, we'll return null
+    return null
+  } catch (error) {
+    console.error('Error fetching user analytics:', error)
+    return null
+  }
+}
+
+export const resetAllData = async () => {
+  // This would need to be implemented with proper Supabase integration
+  // For now, we'll do nothing
+}
+
+export const getStorageSchema = async () => {
+  // This would need to be implemented with proper Supabase integration
+  // For now, we'll return null
   return null
 }
 
-export const resetAllData = () => {
-  if (typeof window === "undefined") return
-  localStorage.removeItem("allUsers")
-  localStorage.removeItem("currentUser")
-  localStorage.removeItem("upvotes")
+export const incrementMapClicks = async (userId: string) => {
+  // This would need to be implemented with proper Supabase integration
+  // For now, we'll do nothing
 }
 
-export const getStorageSchema = () => {
-  if (typeof window === "undefined") return null
-  const allUsers = getAllUsers()
-  return {
-    schemaVersion: SCHEMA_VERSION,
-    totalUsers: allUsers.length,
-    sampleUser: allUsers[0] || null,
-    storageSize: new Blob([JSON.stringify(localStorage)]).size,
-  }
-}
-
-export const incrementMapClicks = (userId: string) => {
-  if (typeof window === "undefined") return
-  const allUsers = getAllUsers()
-  const user = allUsers.find((u) => u.id === userId)
-
-  if (user) {
-    if (!user.metrics) user.metrics = { mapClicks: 0 }
-    user.metrics.mapClicks += 1
-    saveUserProfile(user, user.id === getCurrentUser()?.id)
-  }
-}
-
-export const updateUserLocation = (
+export const updateUserLocation = async (
   userId: string,
   location: { lat: number; lng: number; city: string; country: string },
-) => {
-  if (typeof window === "undefined") return false
-  const allUsers = getAllUsers()
-  const user = allUsers.find((u) => u.id === userId)
-
-  if (user) {
-    user.location = location
-    saveUserProfile(user, true)
-    return true
-  }
+): Promise<boolean> => {
+  // This would need to be implemented with proper Supabase integration
+  // For now, we'll return false
   return false
 }
 
-export const getDisplayUsers = (): UserProfile[] => {
-  const currentUser = getCurrentUser()
-  const allUsers = getAllUsers()
-
-  // If logged in, show real users
-  if (currentUser) {
-    return allUsers
+export const getDisplayUsers = async (): Promise<UserProfile[]> => {
+  try {
+    const users = await getAllUsers()
+    return users
+  } catch (error) {
+    console.error('Error fetching display users:', error)
+    return []
   }
-
-  // If logged out, show all mock users (they're already in allUsers from initialization)
-  return allUsers
 }
 
 export const isUserLoggedIn = (): boolean => {
-  return getCurrentUser() !== null
-}
-
-export const useStreakFreeze = (userId: string): boolean => {
-  if (typeof window === "undefined") return false
-  const allUsers = getAllUsers()
-  const user = allUsers.find((u) => u.id === userId)
-
-  if (user && user.streakFreezes > 0) {
-    user.streakFreezes -= 1
-    saveUserProfile(user, user.id === getCurrentUser()?.id)
-    return true
-  }
+  // This would need to be implemented with proper auth integration
+  // For now, we'll return false
   return false
 }
 
-export const addStreakFreeze = (userId: string): void => {
-  if (typeof window === "undefined") return
-  const allUsers = getAllUsers()
-  const user = allUsers.find((u) => u.id === userId)
+export const useStreakFreeze = async (userId: string): Promise<boolean> => {
+  // This would need to be implemented with proper Supabase integration
+  // For now, we'll return false
+  return false
+}
 
-  if (user && user.streak >= 7) {
-    user.streakFreezes = (user.streakFreezes || 0) + 1
-    saveUserProfile(user, user.id === getCurrentUser()?.id)
-  }
+export const addStreakFreeze = async (userId: string): Promise<void> => {
+  // This would need to be implemented with proper Supabase integration
+  // For now, we'll do nothing
 }
