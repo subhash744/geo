@@ -12,8 +12,22 @@ export function LandingSocialProof() {
 
   useEffect(() => {
     // Get top profiles
-    const leaderboard = getLeaderboard("all-time")
-    setTopProfiles(leaderboard.slice(0, 3))
+    const fetchTopProfiles = async () => {
+      try {
+        const leaderboard = await getLeaderboard("all-time")
+        // Ensure leaderboard is an array before calling slice
+        if (Array.isArray(leaderboard)) {
+          setTopProfiles(leaderboard.slice(0, 3))
+        } else {
+          setTopProfiles([])
+        }
+      } catch (error) {
+        console.error("Error fetching leaderboard:", error)
+        setTopProfiles([])
+      }
+    }
+    
+    fetchTopProfiles()
   }, [])
 
   const containerVariants = {
@@ -95,7 +109,7 @@ export function LandingSocialProof() {
                       <p className="text-sm text-[#605A57]">@{profile.username}</p>
                     </div>
                     <div className="text-right">
-                      <div className="font-bold text-[#37322F]">{profile.score.toFixed(0)}</div>
+                      <div className="font-bold text-[#37322F]">{profile.score?.toFixed(0) || '0'}</div>
                       <div className="text-xs text-[#605A57]">points</div>
                     </div>
                   </motion.div>
