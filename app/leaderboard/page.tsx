@@ -7,7 +7,11 @@ import ImprovedLeaderboard from "@/components/improved-leaderboard"
 
 export default function LeaderboardPage() {
   useEffect(() => {
-    updateStreaks()
+    const init = async () => {
+      await updateStreaks()
+    }
+    
+    init()
   }, [])
 
   return (
