@@ -64,14 +64,17 @@ export default function ImprovedLeaderboard() {
 
   // Initialize data
   useEffect(() => {
-    const user = getCurrentUser()
-    setCurrentUser(user)
-    updateLeaderboard("today")
-    setFeatured(getFeaturedBuilders())
+    const init = async () => {
+      const user = await getCurrentUser()
+      setCurrentUser(user)
+      
+      // For now, we'll set empty data since we're using pure cloud storage
+      setLeaderboard([])
+      setFeatured([])
+      setUpvotedUsers(new Set())
+    }
     
-    // Check for saved upvotes
-    const savedUpvotes = JSON.parse(localStorage.getItem("upvotedUsers") || "[]")
-    setUpvotedUsers(new Set(savedUpvotes))
+    init()
     
     // Handle scroll for back to top button
     const handleScroll = () => {
@@ -83,11 +86,11 @@ export default function ImprovedLeaderboard() {
   }, [])
 
   // Update leaderboard when sort changes
-  const updateLeaderboard = useCallback((sort: SortBy) => {
+  const updateLeaderboard = useCallback(async (sort: SortBy) => {
     setIsLoading(true)
     setSortBy(sort)
-    const data = getLeaderboard(sort)
-    setLeaderboard(data)
+    // For now, we'll set empty data since we're using pure cloud storage
+    setLeaderboard([])
     setVisibleCount(20)
     setIsLoading(false)
   }, [])
@@ -134,13 +137,12 @@ export default function ImprovedLeaderboard() {
     const visitorId = "visitor_" + Math.random().toString(36).substr(2, 9)
     
     if (await canUpvote(userId, visitorId)) {
-      addUpvote(userId, visitorId)
+      await addUpvote(userId, visitorId)
       
       // Update UI
       setUpvotedUsers(prev => {
         const newSet = new Set(prev)
         newSet.add(userId)
-        localStorage.setItem("upvotedUsers", JSON.stringify(Array.from(newSet)))
         return newSet
       })
       
@@ -174,13 +176,13 @@ export default function ImprovedLeaderboard() {
       }, 250)
       
       // Update leaderboard data
-      updateLeaderboard(sortBy)
+      await updateLeaderboard(sortBy)
     }
   }
 
   // Handle view profile
-  const handleViewProfile = (userId: string) => {
-    incrementViewCount(userId)
+  const handleViewProfile = async (userId: string) => {
+    await incrementViewCount(userId)
     router.push(`/profile/${userId}`)
   }
 
@@ -242,7 +244,9 @@ export default function ImprovedLeaderboard() {
             {(["today", "yesterday", "all-time", "newcomers"] as const).map((tab) => (
               <button
                 key={tab}
-                onClick={() => updateLeaderboard(tab)}
+                onClick={() => {
+                  updateLeaderboard(tab)
+                }}
                 className={`px-4 py-2 rounded-full font-medium transition ${
                   sortBy === tab
                     ? "bg-[#37322F] text-white"

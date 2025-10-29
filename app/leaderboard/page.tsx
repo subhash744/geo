@@ -3,7 +3,7 @@
 import { useEffect } from "react"
 import Navigation from "@/components/navigation"
 import { updateStreaks } from "@/lib/storage"
-import { ImprovedLeaderboard } from "@/components/improved-leaderboard"
+import ImprovedLeaderboard from "@/components/improved-leaderboard"
 
 export default function LeaderboardPage() {
   useEffect(() => {
