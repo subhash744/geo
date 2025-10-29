@@ -208,12 +208,18 @@ export default function ImprovedLeaderboard() {
 
   // Get top 3 for podium display
   const topThree = useMemo(() => {
-    return filteredLeaderboard.slice(0, 3)
+    if (Array.isArray(filteredLeaderboard)) {
+      return filteredLeaderboard.slice(0, 3)
+    }
+    return []
   }, [filteredLeaderboard])
 
   // Get remaining entries
   const remainingEntries = useMemo(() => {
-    return filteredLeaderboard.slice(3, visibleCount)
+    if (Array.isArray(filteredLeaderboard)) {
+      return filteredLeaderboard.slice(3, visibleCount)
+    }
+    return []
   }, [filteredLeaderboard, visibleCount])
 
   return (
@@ -511,7 +517,7 @@ export default function ImprovedLeaderboard() {
                   {/* Badges */}
                   <div className="col-span-2">
                     <div className="flex gap-1 flex-wrap">
-                      {entry.badges.slice(0, 3).map((badge) => (
+                      {Array.isArray(entry.badges) && entry.badges.slice(0, 3).map((badge) => (
                         <span
                           key={badge}
                           className={`px-2 py-0.5 text-xs font-medium rounded ${badgeColors[badge] || "bg-gray-300"}`}
@@ -520,7 +526,7 @@ export default function ImprovedLeaderboard() {
                           {badge.substring(0, 3)}
                         </span>
                       ))}
-                      {entry.badges.length > 3 && (
+                      {Array.isArray(entry.badges) && entry.badges.length > 3 && (
                         <span className="px-2 py-0.5 text-xs font-medium rounded bg-[#605A57] text-white">
                           +{entry.badges.length - 3}
                         </span>
